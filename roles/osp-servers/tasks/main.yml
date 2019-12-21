@@ -1,41 +1,67 @@
 ---
-
-# tasks file for osp.servers
-
-  - name: Create a server instance
-    os_server:
-      cloud: ospcloud
-      name: "{{ name }}"
-      image: "{{ image }}"
-      meta: "group={{ group }},deployment_name={{ deployment }}"
-      flavor: "{{ flavor }}"
-      security_groups: "{{ security_group }}"
-      key_name: "{{ key_name }}"
-      wait: yes
-      nics:
+-name: Create new server instances and attaches them a network and passes metadata to the instance
+  os_server:
+    cloud: ospcloud
+    name: "{{ instance.value.name }}"
+    state: "{{ instance.value.state }}"
+    image: "{{ instance.value.image }}"
+    meta: "group={{ instance.value.meta[0].group }}, deployment_name={{ instance.value.meta[0].deployment_name }}"
+    flavor: "{{ instance.value.flavor }}"
+    security_groups: "{{ instance.value.security_group }}"
+    key_name: "{{ instance.value.key_name }}"
+    wait: yes
+    nics:
       - net-name: int_network
-      userdata: |
-        #!/bin/bash
-        cat /root/.ssh/openstack.pub >> /home/cloud-user/.ssh/authorized_keys
-        curl -o /tmp/internal.repo http://www.opentlc.com/download/ansible_bootcamp/repo/internal.repo
-        cp /tmp/internal.repo /etc/yum.repos.d/internal.repo
-    register: instanceip
+    userdata: |
+      #!/bin/bash
+      curl -o /tmp/openstack.pub http://www.opentlc.com/download/ansible_bootcamp/openstack_keys/openstack.pub
+      cat /tmp/openstack.pub >> /home/cloud-user/.ssh/authorized_keys
+      curl -o /tmp/internal.repo http://www.opentlc.com/download/ansible_bootcamp/repo/internal.repo
+      cp /tmp/internal.repo /etc/yum.repos.d/internal.repo
+  loop:
+    "{{ lookup('dict', osp_servers) }}"
+  loop_control:
+    loop_var: instance
+    label: "{{ instance.value.name }}"
+  register: instanceip
 
-  - name: Add floating IP to "{{ name }}"
-    os_floating_ip:
-      cloud: ospcloud
-      state: present
-      reuse: yes
-      server: "{{ name }}"
-      network: ext_network
-      wait: true
-      timeout: 180
-    register: instancefloatingip
-  
-  - name: Wait for "{{ name }}" to be available
-    wait_for:
-      host: "{{ instancefloatingip.floating_ip.floating_ip_address }}"
-      port: 22
-      search_regex: OpenSSH
-      timeout: 600
-    delegate_to: "{{ inventory_hostname }}"
+- name: Add floating IP to Servers
+  os_floating_ip:
+    cloud: ospcloud
+    state: "{{ instance.value.state }}"
+    reuse: yes
+    server: "{{ instance.value.name }}"
+    network: ext_network
+    wait: true
+    timeout: 180
+  loop:
+    "{{ lookup('dict', osp_servers) }}"
+  loop_control:
+    loop_var: instance
+    label: "{{ instance.value.name }}"
+  register: instancefloatingip
+
+- name: Show Servers public IP
+  debug: 
+    msg: >-
+      Server "{{ instance.instance.value.name }}", 
+      Floating IP: "{{ instance.floating_ip.floating_ip_address }}", 
+      Fixed IP: "{{ instance.floating_ip.fixed_ip_address }}"
+  loop:
+    "{{ instancefloatingip.results }}"
+  loop_control:
+    loop_var: instance
+    label: "{{ instance.instance.value.name }}"
+
+- name: Wait for server to be available
+  wait_for:
+    host: "{{ instance.floating_ip.floating_ip_address }}"
+    port: 22
+    search_regex: OpenSSH
+    timeout: 600
+  loop:
+    "{{ instancefloatingip.results }}"
+  loop_control:
+    loop_var: instance
+    label: "{{ instance.instance.value.name }}"
+#  delegate_to: "{{ instance.floating_ip.floating_ip_address }}"
