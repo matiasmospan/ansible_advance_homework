@@ -5,7 +5,7 @@
   - name: Create a server instance
     os_server:
       cloud: ospcloud
-      name: "{{ instance_name }}"
+      name: "{{ name }}"
       image: rhel-guest
       meta: "group={{ group }},deployment_name={{ deployment }}"
       flavor: m2.small
@@ -21,18 +21,18 @@
         cp /tmp/internal.repo /etc/yum.repos.d/internal.repo
     register: instanceip
 
-  - name: Add floating IP to "{{ instance_name }}"
+  - name: Add floating IP to "{{ name }}"
     os_floating_ip:
       cloud: ospcloud
       state: present
       reuse: yes
-      server: "{{ instance_name }}"
+      server: "{{ name }}"
       network: ext_network
       wait: true
       timeout: 180
     register: instancefloatingip
   
-  - name: Wait for "{{ instance_name }}" to be available
+  - name: Wait for "{{ name }}" to be available
     wait_for:
       host: "{{ instancefloatingip.floating_ip.floating_ip_address }}"
       port: 22
