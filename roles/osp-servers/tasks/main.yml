@@ -1,5 +1,5 @@
 ---
--name: Create new server instances and attaches them a network and passes metadata to the instance
+- name: Create new server instances and attaches them a network and passes metadata to the instance
   os_server:
     cloud: ospcloud
     name: "{{ instance.value.name }}"
