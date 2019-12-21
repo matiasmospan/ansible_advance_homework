@@ -5,7 +5,9 @@
     description: "Homework Assignment project"
     organization: "{{ org_name }}"
     state: present
-#    local_path: "/root/ansible_advance_homework"
+    scm_branch: "{{ scm_branch }}"
+    scm_url: "{{ scm_url }}"
+    scm_type: "git"        
     tower_username: "{{ user_name }}"
     tower_password: "{{ password }}"
     validate_certs: "no"
