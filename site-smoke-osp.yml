@@ -5,13 +5,13 @@
     os_server_facts:
      cloud: ospcloud
      server: 'frontend'
-    register: openstack_info
+    register: result
     tags:
       - osp.smoke
 
   - name: Curl website
     uri:
-      url: "http://{{ openstack_info.openstack_servers[0].accessIPv4 }}"
+      url: "http://{{ result.openstack_servers[0].accessIPv4 }}"
       return_content: yes
       status_code: 200
     register: webpage
