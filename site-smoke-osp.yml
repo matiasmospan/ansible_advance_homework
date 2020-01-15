@@ -5,14 +5,14 @@
   - name: OpenStack servers
     os_server_info:
      cloud: ospcloud
-     server: frontend
+     server: 'frontendi
     register: result
     tags:
       - osp.smoke
 
   - name: Curl website
     uri:
-      url: "http://{{ result.ansible_facts.openstack_servers[0].accessIPv4 }}"
+      url: "http://{{ result.openstack_servers[0].accessIPv4 }}"
       return_content: yes
       status_code: 200
     register: webpage
