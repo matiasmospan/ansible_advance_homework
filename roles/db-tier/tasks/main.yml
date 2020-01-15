@@ -1,6 +1,5 @@
 ---
 # tasks file for db-tier
----
 - name: Install postgres
   yum:
     name: postgresql-server
