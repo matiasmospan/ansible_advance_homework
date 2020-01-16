@@ -6,9 +6,9 @@
     state: latest
 
 - name: Initialize postgres
-  command: postgresql-setup initdb
-  args:
-    creates: /var/lib/pgsql/initdb.log
+  command: 
+    cmd: postgresql-setup initdb
+    creates: /var/lib/pgsql/data/postgresql.conf 
 
 - name: Start and enable postgres
   service:
